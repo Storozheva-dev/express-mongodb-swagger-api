@@ -5,7 +5,7 @@ import {
   updateContactById,
   deleteContactById,
 } from '../db/services/contacts.js';
-import createError from 'http-errors';
+import createHttpError from 'http-errors';
 
 export const getAllContactsController = async (req, res) => {
   const data = await getAllContacts();
@@ -21,7 +21,7 @@ export const getContactByIdController = async (req, res) => {
   const data = await getContactById(contactId);
 
   if (!data) {
-    throw createError(404, 'Contact not found');
+    throw createHttpError(404, 'Contact not found');
   }
 
   res.json({
@@ -35,7 +35,7 @@ export const createContactController = async (req, res) => {
   const { name, phoneNumber, email, isFavorite, contactType } = req.body;
 
   if (!name || !phoneNumber || !contactType) {
-    throw createError(400, 'Missing required fields');
+    throw createHttpError(400, 'Missing required fields');
   }
   const newContact = await createContact({
     name,
@@ -60,7 +60,7 @@ export const updateContactController = async (req, res) => {
   const updatedContact = await updateContactById(contactId, updateData);
 
   if (!updatedContact) {
-    throw createError(404, 'Contact not found');
+    throw createHttpError(404, 'Contact not found');
   }
 
   res.json({
@@ -76,7 +76,7 @@ export const deleteContactController = async (req, res) => {
   const deletedContact = await deleteContactById(contactId);
 
   if (!deletedContact) {
-    throw createError(404, 'Contact not found');
+    throw createHttpError(404, 'Contact not found');
   }
   res.status(204).send();
 };
