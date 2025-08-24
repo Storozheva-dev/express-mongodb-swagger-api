@@ -7,6 +7,12 @@ import {
   deleteContactController,
 } from '../controllers/contacts.js';
 import { ctrlWrapper } from '../utils/ctrlWrapper.js';
+import {
+  createContactSchema,
+  updateContactSchema,
+} from '../validation/contactSchemas.js';
+import { validateBody } from '../middlewares/validateBody.js';
+import { isValidId } from '../middlewares/isValidId.js';
 
 const contactsRouter = Router();
 
@@ -14,15 +20,32 @@ const contactsRouter = Router();
 contactsRouter.get('/', ctrlWrapper(getAllContactsController));
 
 // по айді
-contactsRouter.get('/:contactId', ctrlWrapper(getContactByIdController));
+contactsRouter.get(
+  '/:contactId',
+  isValidId,
+  ctrlWrapper(getContactByIdController),
+);
 
 // пост
-contactsRouter.post('/', ctrlWrapper(createContactController));
+contactsRouter.post(
+  '/',
+  validateBody(createContactSchema),
+  ctrlWrapper(createContactController),
+);
 
 // оноалення
-contactsRouter.patch('/:contactId', ctrlWrapper(updateContactController));
+contactsRouter.patch(
+  '/:contactId',
+  isValidId,
+  validateBody(updateContactSchema),
+  ctrlWrapper(updateContactController),
+);
 
 // видалення
-contactsRouter.delete('/:contactId', ctrlWrapper(deleteContactController));
+contactsRouter.delete(
+  '/:contactId',
+  isValidId,
+  ctrlWrapper(deleteContactController),
+);
 
 export default contactsRouter;

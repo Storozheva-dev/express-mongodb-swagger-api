@@ -6,14 +6,34 @@ import {
   deleteContactById,
 } from '../db/services/contacts.js';
 import createHttpError from 'http-errors';
+import { parsePaginationParams } from '../utils/parsePaginationParams.js';
+import { parseSortParams } from '../utils/parseSortParams.js';
+import { parseFilterParams } from '../utils/parseFilterParams.js';
 
-export const getAllContactsController = async (req, res) => {
-  const data = await getAllContacts();
-  res.json({
-    status: 200,
-    message: 'Successfully retrieved all contacts',
-    data,
-  });
+export const getAllContactsController = async (req, res, next) => {
+  try {
+    const { page, perPage } = parsePaginationParams(req.query);
+
+    const { sortBy, sortOrder } = parseSortParams(req.query);
+
+    const filter = parseFilterParams(req.query);
+
+    const data = await getAllContacts({
+      page,
+      perPage,
+      sortBy,
+      sortOrder,
+      filter,
+    });
+
+    res.json({
+      status: 200,
+      message: 'Successfully found contacts!',
+      data,
+    });
+  } catch (err) {
+    next(err);
+  }
 };
 
 export const getContactByIdController = async (req, res) => {
@@ -32,7 +52,7 @@ export const getContactByIdController = async (req, res) => {
 };
 
 export const createContactController = async (req, res) => {
-  const { name, phoneNumber, email, isFavorite, contactType } = req.body;
+  const { name, phoneNumber, email, isFavourite, contactType } = req.body;
 
   if (!name || !phoneNumber || !contactType) {
     throw createHttpError(400, 'Missing required fields');
@@ -41,7 +61,7 @@ export const createContactController = async (req, res) => {
     name,
     phoneNumber,
     email,
-    isFavorite,
+    isFavourite,
     contactType,
   });
 
