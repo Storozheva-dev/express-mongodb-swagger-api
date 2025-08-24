@@ -12,7 +12,7 @@ export const getAllContacts = async ({
   const limit = perPage;
   const skip = (page - 1) * perPage;
 
-  const contactsQuery = ContactCollection.find(filter);
+  const contactsQuery = ContactCollection.find(filter).select('-__v');
 
   const contactsCount = await ContactCollection.find()
     .merge(contactsQuery)
@@ -32,7 +32,7 @@ export const getAllContacts = async ({
 };
 
 export const getContactById = async (id) => {
-  return await ContactCollection.findById(id);
+  return await ContactCollection.findById(id).select('-__v');
 };
 
 // для методу пост
