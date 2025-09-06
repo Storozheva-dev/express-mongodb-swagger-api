@@ -98,17 +98,21 @@ export const refreshUserSessionController = async (req, res, next) => {
 };
 
 // logout
-export const logoutUserController = async (req, res, next) => {
-  try {
-    const { refreshToken } = req.cookies;
-    const { sessionId } = req.body;
+export const logoutUserController = async (req, res) => {
+  let sessionToken = req.cookies.sessionId || req.cookies.refreshToken;
 
-    await logoutUser(sessionId, refreshToken);
-
-    res.clearCookie('refreshToken');
-
-    res.status(204).end();
-  } catch (err) {
-    next(err);
+  if (!sessionToken) {
+    const authHeader = req.get('Authorization');
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      sessionToken = authHeader.split(' ')[1];
+    }
   }
+
+  if (sessionToken) {
+    await logoutUser(sessionToken);
+  }
+
+  res.clearCookie('sessionId');
+  res.clearCookie('refreshToken');
+  res.status(204).send();
 };

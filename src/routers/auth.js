@@ -9,7 +9,6 @@ import { ctrlWrapper } from '../utils/ctrlWrapper.js';
 import { registerUserSchema, loginUserSchema } from '../validation/auth.js';
 import { validateBody } from '../middlewares/validateBody.js';
 
-
 const router = Router();
 
 router.post(
