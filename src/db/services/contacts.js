@@ -8,15 +8,19 @@ export const getAllContacts = async ({
   sortBy = 'name',
   sortOrder = SORT_ORDER.ASC,
   filter = {},
+  userId,
 }) => {
   const limit = perPage;
   const skip = (page - 1) * perPage;
 
-  const contactsQuery = ContactCollection.find(filter).select('-__v');
+  const contactsQuery = ContactCollection.find({ userId, ...filter }).select(
+    '-__v',
+  );
 
-  const contactsCount = await ContactCollection.find()
-    .merge(contactsQuery)
-    .countDocuments();
+  const contactsCount = await ContactCollection.countDocuments({
+    userId,
+    ...filter,
+  });
 
   const contacts = await contactsQuery
     .skip(skip)
@@ -31,28 +35,20 @@ export const getAllContacts = async ({
   };
 };
 
-export const getContactById = async (id) => {
-  return await ContactCollection.findById(id).select('-__v');
+export const getContactById = async (id, userId) => {
+  return ContactCollection.findOne({ _id: id, userId }).select('-__v');
 };
 
-// для методу пост
 export const createContact = async (contactData) => {
-  const newContact = await ContactCollection.create(contactData);
-  return newContact;
+  return ContactCollection.create(contactData);
 };
 
-// оновлюєм
-export const updateContactById = async (id, updateData) => {
-  const updatedContact = await ContactCollection.findByIdAndUpdate(
-    id,
-    updateData,
-    { new: true },
-  );
-  return updatedContact;
+export const updateContactById = async (id, updateData, userId) => {
+  return ContactCollection.findOneAndUpdate({ _id: id, userId }, updateData, {
+    new: true,
+  }).select('-__v');
 };
 
-// видалеяєм
-export const deleteContactById = async (id) => {
-  const deletedContact = await ContactCollection.findByIdAndDelete(id);
-  return deletedContact;
+export const deleteContactById = async (id, userId) => {
+  return ContactCollection.findOneAndDelete({ _id: id, userId }).select('-__v');
 };
