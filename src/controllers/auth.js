@@ -98,21 +98,33 @@ export const refreshUserSessionController = async (req, res, next) => {
 };
 
 // logout
-export const logoutUserController = async (req, res) => {
-  let sessionToken = req.cookies.sessionId || req.cookies.refreshToken;
+const getBearer = (req) => {
+  const h = req.get('Authorization');
+  return h && h.startsWith('Bearer ') ? h.split(' ')[1] : null;
+};
 
-  if (!sessionToken) {
-    const authHeader = req.get('Authorization');
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      sessionToken = authHeader.split(' ')[1];
+export const logoutUserController = async (req, res, next) => {
+  try {
+    const fromHeader = getBearer(req);
+    const fromCookies =
+      req.cookies?.sessionId || req.cookies?.refreshToken || null;
+
+    const candidates = [fromHeader, fromCookies].filter(Boolean);
+
+    let deleted = 0;
+    for (const t of candidates) {
+      deleted += await logoutUser(t);
     }
-  }
 
-  if (sessionToken) {
-    await logoutUser(sessionToken);
-  }
+    res.clearCookie('sessionId');
+    res.clearCookie('refreshToken');
 
-  res.clearCookie('sessionId');
-  res.clearCookie('refreshToken');
-  res.status(204).send();
+    if (candidates.length && deleted === 0) {
+      return res.status(404).json({ message: 'Session not found' });
+    }
+
+    return res.status(204).send();
+  } catch (e) {
+    next(e);
+  }
 };

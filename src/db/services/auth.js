@@ -83,6 +83,9 @@ export const refreshUsersSession = async (refreshToken) => {
 };
 
 // логаут
-export const logoutUser = async (accessToken) => {
-  await SessionCollection.deleteOne({ accessToken });
+export const logoutUser = async (token) => {
+  const { deletedCount } = await SessionCollection.deleteOne({
+    $or: [{ accessToken: token }, { refreshToken: token }],
+  });
+  return deletedCount;
 };
