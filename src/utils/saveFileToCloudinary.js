@@ -10,10 +10,18 @@ cloudinary.config({
 });
 
 export const saveFileToCloudinary = async (file) => {
-  const response = await cloudinary.uploader.upload(file.path, {
-    folder: CLOUDINARY.FOLDER || 'contacts',
-  });
+  const filePath = file?.path;
+  if (!filePath) {
+    throw new Error('No file path provided to saveFileToCloudinary');
+  }
 
-  await fs.unlink(file.path);
-  return response;
+  try {
+    const upload = await cloudinary.uploader.upload(filePath, {
+      folder: CLOUDINARY.FOLDER || 'contacts',
+      overwrite: true,
+    });
+    return upload.secure_url; 
+  } finally {
+    await fs.rm(filePath, { force: true }).catch(() => {});
+  }
 };
