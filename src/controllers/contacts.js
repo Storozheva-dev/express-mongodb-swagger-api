@@ -9,7 +9,8 @@ import createHttpError from 'http-errors';
 import { parsePaginationParams } from '../utils/parsePaginationParams.js';
 import { parseSortParams } from '../utils/parseSortParams.js';
 import { parseFilterParams } from '../utils/parseFilterParams.js';
-import { authenticate } from '../middlewares/authenticate.js';
+import { saveFileToCloudinary } from '../utils/saveFileToCloudinary.js';
+import { CLOUDINARY } from '../constants/index.js';
 
 export const getAllContactsController = async (req, res, next) => {
   try {
@@ -54,10 +55,20 @@ export const getContactByIdController = async (req, res) => {
 };
 
 export const createContactController = async (req, res) => {
+  //  console.log('BODY:', req.body);
+  // console.log('FILE:', req.file);
+
   const { name, phoneNumber, email, isFavourite, contactType } = req.body;
 
   if (!name || !phoneNumber || !contactType) {
     throw createHttpError(400, 'Missing required fields');
+  }
+
+  // завантаж фото
+  let photoUrl = null;
+  if (req.file) {
+    const { secure_url } = await saveFileToCloudinary(req.file);
+    photoUrl = secure_url;
   }
   const newContact = await createContact({
     name,
@@ -66,6 +77,7 @@ export const createContactController = async (req, res) => {
     isFavourite,
     contactType,
     userId: req.user._id,
+    photo: photoUrl,
   });
 
   res.status(201).json({
@@ -78,18 +90,19 @@ export const createContactController = async (req, res) => {
 //  оновлюю
 export const updateContactController = async (req, res) => {
   const { contactId } = req.params;
-  const updateData = req.body;
-
+  let updateData = { ...req.body };
+  if (req.file) {
+    const { secure_url } = await saveFileToCloudinary(req.file);
+    updateData.photo = secure_url;
+  }
   const updatedContact = await updateContactById(
     contactId,
-    req.body,
+    updateData,
     req.user._id,
   );
-
   if (!updatedContact) {
     throw createHttpError(404, 'Contact not found');
   }
-
   res.json({
     status: 200,
     message: 'Successfully patched a contact!',
