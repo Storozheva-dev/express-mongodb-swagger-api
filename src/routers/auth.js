@@ -45,7 +45,6 @@ router.post(
   ctrlWrapper(requestResetEmailController),
 );
 
-// reset password
 router.post(
   '/auth/reset-pwd',
   validateBody(resetPasswordSchema),
@@ -53,3 +52,7 @@ router.post(
 );
 
 export default router;
+
+// "name":"Alina",
+// "email":"pyvim1satidip4@10mail.xyz",
+// "password":"12345"

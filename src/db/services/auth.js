@@ -17,6 +17,7 @@ import handlebars from 'handlebars';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 
+// register
 export const registerUser = async ({ name, email, password }) => {
   const exists = await UserCollection.findOne({ email });
   if (exists) {
@@ -34,24 +35,26 @@ export const registerUser = async ({ name, email, password }) => {
   const { password: _pw, ...safeUser } = created.toObject();
   return safeUser;
 };
-//  логін юзер
-export const loginUser = async (payload) => {
-  const user = await UserCollection.findOne({ email: payload.email });
+
+// login
+export const loginUser = async ({ email, password }) => {
+  const user = await UserCollection.findOne({ email });
   if (!user) {
     throw createHttpError(401, 'Unauthorized');
   }
-  const isEqual = await bcrypt.compare(payload.password, user.password);
 
+  const isEqual = await bcrypt.compare(password, user.password);
   if (!isEqual) {
     throw createHttpError(401, 'Unauthorized');
   }
 
+  // сбрасываем старую сессию
   await SessionCollection.deleteOne({ userId: user._id });
 
   const accessToken = randomBytes(30).toString('hex');
   const refreshToken = randomBytes(30).toString('hex');
 
-  await SessionCollection.create({
+  const session = await SessionCollection.create({
     userId: user._id,
     accessToken,
     refreshToken,
@@ -59,11 +62,10 @@ export const loginUser = async (payload) => {
     refreshTokenValidUntil: new Date(Date.now() + THIRTY_DAYS),
   });
 
-  return { accessToken, refreshToken };
+  return { accessToken, refreshToken, sessionId: session._id };
 };
 
-// решреф
-
+// refresh
 export const refreshUsersSession = async (refreshToken) => {
   const session = await SessionCollection.findOne({ refreshToken });
 
@@ -71,10 +73,8 @@ export const refreshUsersSession = async (refreshToken) => {
     throw createHttpError(401, 'Session not found');
   }
 
-  const isSessionTokenExpired =
-    new Date() > new Date(session.refreshTokenValidUntil);
-
-  if (isSessionTokenExpired) {
+  const isExpired = new Date() > new Date(session.refreshTokenValidUntil);
+  if (isExpired) {
     throw createHttpError(401, 'Session token expired');
   }
 
@@ -83,7 +83,7 @@ export const refreshUsersSession = async (refreshToken) => {
   const accessToken = randomBytes(30).toString('hex');
   const newRefreshToken = randomBytes(30).toString('hex');
 
-  await SessionCollection.create({
+  const newSession = await SessionCollection.create({
     userId: session.userId,
     accessToken,
     refreshToken: newRefreshToken,
@@ -91,20 +91,25 @@ export const refreshUsersSession = async (refreshToken) => {
     refreshTokenValidUntil: new Date(Date.now() + THIRTY_DAYS),
   });
 
-  return { accessToken, refreshToken: newRefreshToken };
+  return {
+    accessToken,
+    refreshToken: newRefreshToken,
+    sessionId: newSession._id,
+  };
 };
 
-// логаут
-export const logoutUser = async (accessToken) => {
-  await SessionCollection.deleteOne({ accessToken });
+// logout
+export const logoutUser = async (sessionId) => {
+  await SessionCollection.deleteOne({ _id: sessionId });
 };
 
-// скид паролю
+// request reset
 export const requestResetToken = async (email) => {
   const user = await UserCollection.findOne({ email });
   if (!user) {
     throw createHttpError(404, 'User not found!');
   }
+
   const resetToken = jwt.sign({ sub: user._id, email }, JWT.SECRET, {
     expiresIn: '5m',
   });
@@ -113,8 +118,7 @@ export const requestResetToken = async (email) => {
     resetToken,
   )}`;
 
-  // шаблон
-  const templatePath = path.join(TEMPLATES_DIR, 'reset-password-email.html'); 
+  const templatePath = path.join(TEMPLATES_DIR, 'reset-password-email.html');
   const source = await fs.readFile(templatePath, 'utf-8');
   const html = handlebars.compile(source)({
     name: user.name || 'there',
@@ -122,14 +126,12 @@ export const requestResetToken = async (email) => {
     year: new Date().getFullYear(),
   });
 
-  // 4) отправляем
   try {
     await sendEmail({
       from: SMTP.FROM,
       to: email,
       subject: 'Reset your password',
       html,
-      // text: `Reset your password: ${resetLink}`  // можно оставить для plain-text
     });
   } catch {
     throw createHttpError(
@@ -141,7 +143,7 @@ export const requestResetToken = async (email) => {
   return resetToken;
 };
 
-// зміна паролю
+// reset password
 export const resetPassword = async (payload) => {
   let entries;
   try {
@@ -149,6 +151,7 @@ export const resetPassword = async (payload) => {
   } catch {
     throw createHttpError(401, 'Token is expired or invalid.');
   }
+
   const user = await UserCollection.findOne({
     email: entries.email,
     _id: entries.sub,
@@ -156,6 +159,7 @@ export const resetPassword = async (payload) => {
   if (!user) {
     throw createHttpError(404, 'User not found!');
   }
+
   const encryptedPassword = await bcrypt.hash(payload.password, 10);
   await UserCollection.updateOne(
     { _id: user._id },
@@ -163,5 +167,3 @@ export const resetPassword = async (payload) => {
   );
   await SessionCollection.deleteMany({ userId: user._id });
 };
-
-// шаблон
