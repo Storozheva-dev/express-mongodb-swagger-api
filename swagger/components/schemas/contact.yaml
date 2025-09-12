@@ -1,0 +1,51 @@
+# swagger/components/schemas/student.yaml
+
+type: object
+required:
+  - name
+  - phoneNumber
+  - contactType
+  - userId
+properties:
+  _id:
+    type: string
+    description: Contact ID (Mongo ObjectId)
+    example: 68bf1d2c7608f3e24b4b9035
+  name:
+    type: string
+    description: Name of the contact
+    example: 'John Doe'
+  phoneNumber:
+    type: string
+    description: Phone number of the contact
+    example: '+123456789'
+  email:
+    type: string
+    description: Email address of the contact
+    example: 'john@example.com'
+  isFavourite:
+    type: boolean
+    description: Whether the contact is a favorite
+    default: false
+  contactType:
+    type: string
+    description: Type of the contact
+    enum: [work, home, personal]
+  userId:
+    type: string
+    description: ID of user who owns this contact
+    example: 68bf1d2c7608f3e24b4b9035
+  photo:
+    type: string
+    description: URL of contact photo
+    example: 'https://res.cloudinary.com/dkcg0di6x/image/upload/v1757364092/contacts/wfzqxb1oazupyhmbchqm.jpg'
+  createdAt:
+    type: string
+    format: date-time
+    description: Date and time when the contact was created
+    example: '2022-12-31T12:00:00.000Z'
+  updatedAt:
+    type: string
+    format: date-time
+    description: Date and time when the contact was last updated
+    example: '2022-12-31T12:00:00.000Z'
