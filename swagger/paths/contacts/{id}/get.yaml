@@ -15,5 +15,9 @@ parameters:
 responses:
   '200':
     $ref: '../../../components/responses/200ContactById.yaml'
+  '400':
+    $ref: '../../../components/responses/400BadRequest.yaml'
+  '401':
+    $ref: '../../../components/responses/401Unauthorized.yaml'
   '404':
     $ref: '../../../components/responses/404ContactNotFound.yaml'

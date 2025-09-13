@@ -12,6 +12,9 @@
   "servers": [
     {
       "url": "http://localhost:3000"
+    },
+    {
+      "url": "https://hw7-swagger-4cgn.onrender.com"
     }
   ],
   "tags": [
@@ -73,9 +76,9 @@
                     "description": "Type of contact",
                     "type": "string",
                     "enum": [
-                      "personal",
                       "work",
-                      "other"
+                      "home",
+                      "personal"
                     ],
                     "example": "personal"
                   },
@@ -95,6 +98,9 @@
           },
           "400": {
             "$ref": "#/components/responses/400MissingFields"
+          },
+          "401": {
+            "$ref": "#/components/responses/401Unauthorized"
           }
         }
       },
@@ -282,6 +288,12 @@
           "200": {
             "$ref": "#/components/responses/200ContactById"
           },
+          "400": {
+            "$ref": "#/components/responses/400BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/401Unauthorized"
+          },
           "404": {
             "$ref": "#/components/responses/404ContactNotFound"
           }
@@ -357,6 +369,12 @@
           "200": {
             "$ref": "#/components/responses/200ContactUpdated"
           },
+          "400": {
+            "$ref": "#/components/responses/400BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/401Unauthorized"
+          },
           "404": {
             "$ref": "#/components/responses/404ContactNotFound"
           }
@@ -390,6 +408,12 @@
           "204": {
             "$ref": "#/components/responses/204ContactDeleted"
           },
+          "400": {
+            "$ref": "#/components/responses/400BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/401Unauthorized"
+          },
           "404": {
             "$ref": "#/components/responses/404ContactNotFound"
           }
@@ -408,6 +432,7 @@
       "contact": {
         "type": "object",
         "required": [
+          "_id",
           "name",
           "phoneNumber",
           "contactType",
@@ -475,6 +500,7 @@
       "Contact": {
         "type": "object",
         "required": [
+          "_id",
           "name",
           "phoneNumber",
           "contactType",
@@ -659,6 +685,40 @@
                 },
                 "data": {
                   "$ref": "#/components/schemas/contact"
+                }
+              }
+            }
+          }
+        }
+      },
+      "400BadRequest": {
+        "description": "Invalid contactId format",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "required": [
+                "status",
+                "message",
+                "data"
+              ],
+              "properties": {
+                "status": {
+                  "type": "integer",
+                  "example": 400
+                },
+                "message": {
+                  "type": "string",
+                  "example": "BadRequestError"
+                },
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Invalid contactId format"
+                    }
+                  }
                 }
               }
             }
